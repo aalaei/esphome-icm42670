@@ -22,8 +22,6 @@ namespace esphome
 
     const float ICM42670_RANGE_PER_DIGIT_2G = 16384.0;
 
-    const float GRAVITY_EARTH = 9.80665f;
-
     float filtered_ax = 0.0, filtered_ay = 0.0, filtered_az = 0.0;
     float alpha = 0.5;
 
@@ -100,6 +98,23 @@ namespace esphome
         return;
       }
 
+      // Gyro values
+
+      float gyro_x = (int16_t)((raw_gyro_data[0] << 8) | raw_gyro_data[1]);
+      float gyro_y = (int16_t)((raw_gyro_data[2] << 8) | raw_gyro_data[3]);
+      float gyro_z = (int16_t)((raw_gyro_data[4] << 8) | raw_gyro_data[5]);
+
+      if (this->gyro_x_sensor_ != nullptr)
+        this->gyro_x_sensor_->publish_state(gyro_x);
+
+      if (this->gyro_y_sensor_ != nullptr)
+        this->gyro_y_sensor_->publish_state(gyro_y);
+
+      if (this->gyro_z_sensor_ != nullptr)
+        this->gyro_z_sensor_->publish_state(gyro_z);
+
+      // Accelerometer values
+
       float accel_x = (int16_t)((raw_accel_data[0] << 8) | raw_accel_data[1]) / ICM42670_RANGE_PER_DIGIT_2G;
       float accel_y = (int16_t)((raw_accel_data[2] << 8) | raw_accel_data[3]) / ICM42670_RANGE_PER_DIGIT_2G;
       float accel_z = (int16_t)((raw_accel_data[4] << 8) | raw_accel_data[5]) / ICM42670_RANGE_PER_DIGIT_2G;
@@ -108,10 +123,6 @@ namespace esphome
       filtered_ax = alpha * accel_x + (1 - alpha) * filtered_ax;
       filtered_ay = alpha * accel_y + (1 - alpha) * filtered_ay;
       filtered_az = alpha * accel_z + (1 - alpha) * filtered_az;
-
-      float gyro_x = (int16_t)((raw_gyro_data[0] << 8) | raw_gyro_data[1]);
-      float gyro_y = (int16_t)((raw_gyro_data[2] << 8) | raw_gyro_data[3]);
-      float gyro_z = (int16_t)((raw_gyro_data[4] << 8) | raw_gyro_data[5]);
 
       if (this->accel_x_sensor_ != nullptr)
         this->accel_x_sensor_->publish_state(accel_x);

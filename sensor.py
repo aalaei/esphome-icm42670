@@ -87,10 +87,10 @@ async def to_code(config):
         if accel_key in config:
             sens = await sensor.new_sensor(config[accel_key])
             cg.add(getattr(var, f"set_accel_{d}_sensor")(sens))
-        # accel_key = f"gyro_{d}"
-        # if accel_key in config:
-        #     sens = await sensor.new_sensor(config[accel_key])
-        #     cg.add(getattr(var, f"set_gyro_{d}_sensor")(sens))
+        accel_key = f"gyro_{d}"
+        if accel_key in config:
+            sens = await sensor.new_sensor(config[accel_key])
+            cg.add(getattr(var, f"set_gyro_{d}_sensor")(sens))
 
     if CONF_TEMPERATURE in config:
         sens = await sensor.new_sensor(config[CONF_TEMPERATURE])
