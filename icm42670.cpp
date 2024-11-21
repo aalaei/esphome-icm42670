@@ -91,8 +91,8 @@ namespace esphome
         return;
       }
 
-      uint16_t raw_gyro_data[6];
-      if (!this->read_bytes_16(ICM42670_REGISTER_GYRO_XOUT_H, raw_gyro_data, 6))
+      uint8_t raw_gyro_data[6];
+      if (!this->read_bytes(ICM42670_REGISTER_GYRO_XOUT_H, raw_gyro_data, 6))
       {
         this->status_set_warning();
         return;
