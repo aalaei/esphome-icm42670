@@ -60,6 +60,7 @@ namespace esphome
         return;
       }
     }
+
     void ICM42670Component::dump_config()
     {
       ESP_LOGCONFIG(TAG, "ICM42670:");
@@ -80,6 +81,8 @@ namespace esphome
 
     void ICM42670Component::update()
     {
+      ESP_LOGD("  ", "ORIENTATION %d", this->orientation_);
+      ESP_LOGD("  ", "INVERTED %d", this->inverted_);
 
       ESP_LOGV(TAG, "    Updating ICM42670...");
       uint8_t raw_accel_data[6];
@@ -115,9 +118,11 @@ namespace esphome
 
       // Accelerometer values
 
-      float accel_x = (int16_t)((raw_accel_data[0] << 8) | raw_accel_data[1]) / ICM42670_RANGE_PER_DIGIT_2G;
-      float accel_y = (int16_t)((raw_accel_data[2] << 8) | raw_accel_data[3]) / ICM42670_RANGE_PER_DIGIT_2G;
-      float accel_z = (int16_t)((raw_accel_data[4] << 8) | raw_accel_data[5]) / ICM42670_RANGE_PER_DIGIT_2G;
+      float accel_x, accel_y, accel_z;
+
+      accel_x = (int16_t)((raw_accel_data[0] << 8) | raw_accel_data[1]) / ICM42670_RANGE_PER_DIGIT_2G;
+      accel_y = (int16_t)((raw_accel_data[2] << 8) | raw_accel_data[3]) / ICM42670_RANGE_PER_DIGIT_2G;
+      accel_z = (int16_t)((raw_accel_data[4] << 8) | raw_accel_data[5]) / ICM42670_RANGE_PER_DIGIT_2G;
 
       // Apply low-pass filter
       filtered_ax = alpha * accel_x + (1 - alpha) * filtered_ax;
@@ -133,9 +138,29 @@ namespace esphome
       if (this->accel_z_sensor_ != nullptr)
         this->accel_z_sensor_->publish_state(accel_z);
 
-      float roll = atan2(-filtered_ax, sqrt(filtered_ay * filtered_ay + filtered_az * filtered_az)) * 180.0 / M_PI;
-      float pitch = atan2(filtered_ay, sqrt(filtered_ax * filtered_ax + filtered_az * filtered_az)) * 180.0 / M_PI;
-      float yaw = atan2(filtered_ay, sqrt(filtered_ax * filtered_ax + filtered_ay * filtered_ay)) * 180.0 / M_PI;
+      float roll, pitch, yaw;
+
+      if (this->orientation_ == 1)
+      {
+        roll = atan2(-filtered_ax, sqrt(filtered_ay * filtered_ay + filtered_az * filtered_az)) * 180.0 / M_PI;
+        pitch = atan2(filtered_ay, sqrt(filtered_ax * filtered_ax + filtered_az * filtered_az)) * 180.0 / M_PI;
+        yaw = atan2(filtered_ay, sqrt(filtered_ax * filtered_ax + filtered_ay * filtered_ay)) * 180.0 / M_PI;
+      }
+      else if (this->orientation_ == 2)
+      {
+        roll = atan2(-filtered_az, sqrt(filtered_ax * filtered_ax + filtered_ay * filtered_ay)) * 180.0 / M_PI;
+        pitch = atan2(filtered_ax, sqrt(filtered_az * filtered_az + filtered_ay * filtered_ay)) * 180.0 / M_PI;
+      }
+      else if (this->orientation_ == 3)
+      {
+        roll = atan2(filtered_ax, sqrt(filtered_az * filtered_az + filtered_ay * filtered_ay)) * 180.0 / M_PI;
+        pitch = atan2(-filtered_az, sqrt(filtered_ax * filtered_ax + filtered_ay * filtered_ay)) * 180.0 / M_PI;
+      }
+      else
+      {
+        pitch = atan2(-filtered_ax, sqrt(filtered_ay * filtered_ay + filtered_az * filtered_az)) * 180.0 / M_PI;
+        roll = atan2(filtered_ay, sqrt(filtered_ax * filtered_ax + filtered_az * filtered_az)) * 180.0 / M_PI;
+      }
 
       if (this->pitch_sensor_ != nullptr)
         this->pitch_sensor_->publish_state(pitch);

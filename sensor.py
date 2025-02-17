@@ -25,6 +25,8 @@ CONF_GYRO_Z = "gyro_z"
 CONF_PITCH = "pitch"
 CONF_ROLL = "roll"
 CONF_YAW = "yaw"
+CONF_ORIENTATION = "orientation"
+CONF_INVERTED = "inverted"
 
 icm42670_ns = cg.esphome_ns.namespace("icm42670")
 ICM42670Component = icm42670_ns.class_(
@@ -39,6 +41,11 @@ accel_schema = sensor.sensor_schema(
 )
 gyro_schema = sensor.sensor_schema(
     unit_of_measurement=UNIT_DEGREE_PER_SECOND,
+    icon=ICON_SCREEN_ROTATION,
+    accuracy_decimals=2,
+    state_class=STATE_CLASS_MEASUREMENT,
+)
+orientation_schema = sensor.sensor_schema(
     icon=ICON_SCREEN_ROTATION,
     accuracy_decimals=2,
     state_class=STATE_CLASS_MEASUREMENT,
@@ -69,6 +76,8 @@ CONFIG_SCHEMA = (
             cv.Optional(CONF_PITCH): tilt_schema,
             cv.Optional(CONF_ROLL): tilt_schema,
             cv.Optional(CONF_YAW): tilt_schema,
+            cv.Optional(CONF_ORIENTATION, default=1): cv.int_range(min=1, max=4),
+            cv.Optional(CONF_INVERTED, default=False): cv.boolean,
             cv.Optional(CONF_TEMPERATURE): temperature_schema,
         }
     )
@@ -95,6 +104,12 @@ async def to_code(config):
     if CONF_TEMPERATURE in config:
         sens = await sensor.new_sensor(config[CONF_TEMPERATURE])
         cg.add(var.set_temperature_sensor(sens))
+
+    if CONF_ORIENTATION in config:
+        cg.add(var.set_orientation(config[CONF_ORIENTATION]))
+    
+    if CONF_INVERTED in config:
+        cg.add(var.set_inverted(config[CONF_INVERTED]))
 
     if CONF_PITCH in config:
         sens = await sensor.new_sensor(config[CONF_PITCH])

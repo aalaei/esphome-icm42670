@@ -29,6 +29,8 @@ namespace esphome
       void set_pitch_sensor(sensor::Sensor *pitch_sensor) { pitch_sensor_ = pitch_sensor; }
       void set_roll_sensor(sensor::Sensor *roll_sensor) { roll_sensor_ = roll_sensor; }
       void set_yaw_sensor(sensor::Sensor *yaw_sensor) { yaw_sensor_ = yaw_sensor; }
+      void set_orientation(uint8_t orientation) { orientation_ = orientation; }
+      void set_inverted(bool inverted) { inverted_ = inverted; }
 
     protected:
       sensor::Sensor *accel_x_sensor_{nullptr};
@@ -41,6 +43,8 @@ namespace esphome
       sensor::Sensor *pitch_sensor_{nullptr};
       sensor::Sensor *roll_sensor_{nullptr};
       sensor::Sensor *yaw_sensor_{nullptr};
+      uint8_t orientation_;
+      bool inverted_;
     };
     ;
 
