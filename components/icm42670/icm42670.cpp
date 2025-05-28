@@ -1,3 +1,4 @@
+// icm42670.cpp
 #include "icm42670.h"
 #include "esphome/core/log.h"
 #include "esphome/core/hal.h" // For millis() and get_time()
@@ -43,29 +44,66 @@ namespace esphome
     // Higher value (e.g., 0.98-0.995): Trusts gyro more. Faster response, but more drift/noise.
     // Lower value (e.g., 0.90-0.95): Trusts accel more. Smoother, less drift, but slower response.
     // For smoother and slower changes, try decreasing this value (e.g., 0.95f or 0.90f).
-    const float COMPLEMENTARY_FILTER_ALPHA = 0.95f; 
+    const float COMPLEMENTARY_FILTER_ALPHA = 0.94f; 
     // --- END Complementary Filter Alpha ---
 
     void ICM42670Component::setup()
     {
       ESP_LOGV(TAG, "Setting up ICM42670...");
-      uint8_t who_am_i;
-      this->read_byte(ICM42670_REGISTER_WHO_AM_I, &who_am_i);
 
-      if (!this->read_byte(ICM42670_REGISTER_WHO_AM_I, &who_am_i) ||
-          (who_am_i != 0x60))
+      delay(200); 
+
+      ESP_LOGV(TAG, "  Attempting to set Power Management (PWR_MGMT0) to active mode...");
+      if (!this->write_byte(ICM42670_REGISTER_PWR_MGMT0, 0x8F))
       {
+        ESP_LOGE(TAG, "Failed to set initial PWR_MGMT0 register. This might prevent WHO_AM_I from working.");
+      }
+      delay(50); 
+
+      ESP_LOGV(TAG, "  Performing software reset...");
+      if (!this->write_byte(ICM42670_REGISTER_DEVICE_CONFIG, 0x01)) {
+        ESP_LOGE(TAG, "Failed to perform software reset.");
         this->mark_failed();
         return;
       }
+      delay(100); 
 
-      if (!this->write_byte(ICM42670_REGISTER_PWR_MGMT0, 0x9F))
+      uint8_t who_am_i = 0x00; 
+      bool success = false;
+      const int max_retries = 5; 
+      
+      for (int i = 0; i < max_retries; ++i) {
+        ESP_LOGV(TAG, "Attempting to read WHO_AM_I (retry %d/%d)...", i + 1, max_retries);
+        if (this->read_byte(ICM42670_REGISTER_WHO_AM_I, &who_am_i)) {
+          // Changed expected WHO_AM_I to 0x60 based on your discovery for production board
+          if (who_am_i == 0x60) { 
+            success = true;
+            break; 
+          } else {
+            ESP_LOGW(TAG, "  WHO_AM_I mismatch on retry %d: Expected 0x60, got 0x%02X", i + 1, who_am_i);
+          }
+        } else {
+          ESP_LOGW(TAG, "  Failed to read WHO_AM_I register on retry %d.", i + 1);
+        }
+        delay(20); 
+      }
+
+      if (!success)
+      {
+        ESP_LOGE(TAG, "WHO_AM_I check failed after %d retries. Final WHO_AM_I: 0x%02X. Communication with ICM42670 failed!", max_retries, who_am_i);
+        this->mark_failed();
+        return;
+      }
+      ESP_LOGI(TAG, "WHO_AM_I: 0x%02X - ICM42670 detected successfully!", who_am_i);
+
+      ESP_LOGV(TAG, "  Setting up Power Management (PWR_MGMT0)...");
+      if (!this->write_byte(ICM42670_REGISTER_PWR_MGMT0, 0x8F))
       {
         ESP_LOGE(TAG, "Failed to set PWR_MGMT0 register after WHO_AM_I. This might affect sensor operation.");
         this->mark_failed(); 
         return;
       }
-      ESP_LOGV(TAG, "  PWR_MGMT0 set to 0x9F (Accel/Gyro Low-Noise Mode, Temp Enabled)");
+      ESP_LOGV(TAG, "  PWR_MGMT0 set to 0x8F (Accel/Gyro Low-Noise Mode, Temp Enabled)");
 
       ESP_LOGV(TAG, "  Setting up Gyro Config (GYRO_CONFIG0)...");
       if (!this->write_byte(ICM42670_REGISTER_GYRO_CONFIG0, 0x01))
