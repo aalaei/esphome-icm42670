@@ -14,19 +14,19 @@ This repository contains a custom ESPhome component designed for the ESP32-S3-BO
     ```
 2. Add the custom component to your ESPhome configuration:
     ```yaml
-external_components:
- - source:
-    type: local
-    path: components
-   components: [ icm42670 ] 
+    external_components:
+      - source:
+          type: local
+          path: components
+        components: [ icm42670 ] 
     ```
 or directly 
 ```yaml
-external_components:
-    - source:
-            type: git
-            url: https://github.com/aalaei/esphome-icm42670.git
-            ref: main
+    external_components:
+      - source:
+          type: git
+          url: https://github.com/aalaei/esphome-icm42670.git
+          ref: main
         components: [ icm42670 ]
 ```
 
