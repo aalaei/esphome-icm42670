@@ -18,7 +18,7 @@ external_components:
  - source:
     type: local
     path: components
-   components: [ esphome-icm42670 ] 
+   components: [ icm42670 ] 
     ```
 or directly 
 ```yaml
@@ -27,7 +27,7 @@ external_components:
             type: git
             url: https://github.com/aalaei/esphome-icm42670.git
             ref: main
-        components: [ esphome-icm42670 ]
+        components: [ icm42670 ]
 ```
 
 ## Configuration Example
